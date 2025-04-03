@@ -3,16 +3,16 @@
       <h1 class="mb-4">Découvrez les meilleurs dramas coréens</h1>
       
       <!-- Filtre par genre -->
-      <div class="mb-4">
+      <!-- <div class="mb-4">
         <label for="genre-filter" class="form-label">Filtrer par genre:</label>
         <select id="genre-filter" class="form-select" v-model="selectedGenre">
           <option value="">Tous les genres</option>
           <option v-for="genre in genres" :key="genre" :value="genre">{{ genre }}</option>
         </select>
-      </div>
+      </div> -->
       
       <!-- Recherche -->
-      <div class="mb-4">
+      <!-- <div class="mb-4">
         <label for="search-input" class="form-label">Rechercher:</label>
         <input 
           type="text" 
@@ -22,7 +22,7 @@
           placeholder="Rechercher par titre, acteur..."
           aria-label="Rechercher un drama par titre ou acteur"
         >
-      </div>
+      </div> -->
       
       <!-- Loading indicator -->
       <div v-if="isLoading" class="my-5 text-center">
@@ -104,27 +104,48 @@ export default {
       
     // Dramas filtrés selon la recherche et le genre
     filteredDramas() {
-      return this.dramas.filter(drama => {
-        // Convertir les chaînes en minuscules pour une recherche non sensible à la casse
-        const searchTerm = this.searchTerm.toLowerCase();
-        const titre = (drama.Titre || '').toLowerCase();
-        const acteurs = (drama.Acteurs || '').toLowerCase();
-        const synopsis = (drama.Synopsis || '').toLowerCase();
-        const genre = (drama.Genre || '').toLowerCase();
-        
-        // Vérifier si le terme de recherche correspond à l'un des champs
-        const matchesSearch = searchTerm === '' || 
-          titre.includes(searchTerm) || 
-          acteurs.includes(searchTerm) || 
-          synopsis.includes(searchTerm);
-        
-        // Vérifier si le genre correspond au filtre sélectionné
-        const matchesGenre = this.selectedGenre === '' || drama.Genre === this.selectedGenre;
-        
-        return matchesSearch && matchesGenre;
-      });
-    }
-  },
+    return this.dramas.filter(drama => {
+      // Récupérer le terme de recherche depuis l'URL
+      const searchTermFromUrl = this.$route.query.search ? 
+        this.$route.query.search.toLowerCase() : '';
+      
+      // Récupérer le genre depuis l'URL
+      const genreFromUrl = this.$route.query.genre || '';
+      
+      // Utiliser le terme de recherche depuis l'URL ou le champ local
+      const searchTerm = searchTermFromUrl || this.searchTerm.toLowerCase();
+      
+      // Filtrer par terme de recherche
+      const matchesSearch = searchTerm === '' || 
+        drama.Titre.toLowerCase().includes(searchTerm) || 
+        drama.Acteurs.toLowerCase().includes(searchTerm) || 
+        drama.Synopsis.toLowerCase().includes(searchTerm);
+      
+      // Filtrer par genre
+      const matchesGenre = genreFromUrl === '' || drama.Genre === genreFromUrl;
+      
+      return matchesSearch && matchesGenre;
+    });
+  }
+},
+
+  watch: {
+    // Surveiller les changements dans l'URL pour mettre à jour le filtrage
+    ' $route.query': {
+      handler() {
+      // Si un terme de recherche est présent dans l'URL, le copier dans le champ local
+      if (this.$route.query.search) {
+        this.searchTerm = this.$route.query.search;
+      }
+      // Si un genre est sélectionné dans l'URL
+      if (this.$route.query.genre) {
+        this.selectedGenre = this.$route.query.genre;
+      }
+    },
+    immediate: true
+  }
+}, 
+
   methods: {
     // Méthode pour formater le nom de l'image
     formatImageName(title) {
