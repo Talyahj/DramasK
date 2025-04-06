@@ -10,12 +10,16 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 // Désactiver les avertissements de production
 Vue.config.productionTip = false;
 
+// Rendre l'instance Vue accessible globalement pour l'API client
+window.Vue = Vue;
+
 // Filtre pour limiter la longueur du texte
 Vue.filter('truncate', (text, length, suffix) => {
-  if (text && text.length > length) {
+  if (!text) return '';
+  if (text.length > length) {
     return text.substring(0, length) + (suffix || '...');
   } else {
-    return text || '';
+    return text;
   }
 });
 
@@ -26,8 +30,27 @@ Vue.filter('stars', value => {
   return stars + emptyStars;
 });
 
-// Bus d'événements global pour la communication entre composants
-Vue.prototype.$eventBus = new Vue();
+// Directive personnalisée pour le focus automatique
+Vue.directive('focus', {
+  inserted: function (el) {
+    el.focus();
+  }
+});
+
+// Directive personnalisée pour le clic en dehors
+Vue.directive('click-outside', {
+  bind: function(el, binding, vnode) {
+    el.clickOutsideEvent = function(event) {
+      if (!(el === event.target || el.contains(event.target))) {
+        vnode.context[binding.expression](event);
+      }
+    };
+    document.body.addEventListener('click', el.clickOutsideEvent);
+  },
+  unbind: function(el) {
+    document.body.removeEventListener('click', el.clickOutsideEvent);
+  }
+});
 
 // Gestionnaire d'erreurs global
 Vue.config.errorHandler = (err, vm, info) => {
@@ -39,13 +62,6 @@ Vue.config.errorHandler = (err, vm, info) => {
 // Intercepter les erreurs non capturées
 window.addEventListener('unhandledrejection', event => {
   console.error('Unhandled Promise Rejection:', event.reason);
-});
-
-// Directive personnalisée pour le focus automatique
-Vue.directive('focus', {
-  inserted: function (el) {
-    el.focus();
-  }
 });
 
 // Instance principale de Vue

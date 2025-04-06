@@ -21,6 +21,7 @@ const actions = {
       localStorage.setItem('user', JSON.stringify(response.data.user));
       return response;
     } catch (error) {
+      console.error('Erreur de connexion:', error);
       throw error;
     }
   },
@@ -34,6 +35,7 @@ const actions = {
       localStorage.setItem('user', JSON.stringify(response.data.user));
       return response;
     } catch (error) {
+      console.error('Erreur d\'inscription:', error);
       throw error;
     }
   },
@@ -42,23 +44,40 @@ const actions = {
   logout({ commit }) {
     userService.logout();
     commit('CLEAR_USER_DATA');
-    // Réinitialiser l'état du store (optionnel)
-    location.reload();
+    
+    // Ne pas recharger la page pour une meilleure expérience utilisateur
+    // Plutôt réinitialiser les modules du store qui contiennent des données utilisateur
+    commit('favorite/SET_FAVORITES', [], { root: true });
   },
   
   // Set user data from localStorage
   setUserData({ commit }, userData) {
     commit('SET_USER_DATA', userData);
+  },
+  
+  // Vérifier si l'utilisateur est toujours connecté
+  async checkAuthStatus({ commit, state }) {
+    // Si pas de token, l'utilisateur n'est pas connecté
+    if (!state.token) return false;
+    
+    try {
+      // On pourrait implémenter un appel API pour vérifier la validité du token
+      // Pour l'instant, on vérifie juste que les données sont cohérentes
+      return !!state.user;
+    } catch (error) {
+      console.error('Erreur lors de la vérification du statut d\'authentification:', error);
+      // En cas d'erreur, on déconnecte l'utilisateur
+      userService.logout();
+      commit('CLEAR_USER_DATA');
+      return false;
+    }
   }
 };
 
 const mutations = {
   SET_USER_DATA(state, userData) {
     state.token = userData.token;
-    state.user = {
-      ...userData.user,
-      isAdmin: userData.user.type === 'admin'
-    };
+    state.user = userData.user;
   },
   CLEAR_USER_DATA(state) {
     state.token = null;

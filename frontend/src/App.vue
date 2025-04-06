@@ -119,7 +119,8 @@
         <button type="button" class="btn-close" @click="clearMessage"></button>
       </div>
       
-      <router-view/>
+      <!-- Ajout de l'attribut :key pour forcer la reconstruction du composant quand l'URL change -->
+      <router-view :key="$route.fullPath"/>
     </main>
     
     <footer class="bg-dark text-white py-4 mt-5">

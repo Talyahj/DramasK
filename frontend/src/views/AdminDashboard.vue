@@ -8,81 +8,12 @@
         <h2 class="h5 mb-0">Ajouter un nouveau drama</h2>
       </div>
       <div class="card-body">
-        <form @submit.prevent="addDrama">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="titre" class="form-label">Titre</label>
-              <input 
-                type="text" 
-                id="titre" 
-                class="form-control" 
-                v-model="newDrama.titre" 
-                required
-                aria-required="true"
-              >
-            </div>
-            
-            <div class="col-md-3 mb-3">
-              <label for="genre" class="form-label">Genre</label>
-              <input 
-                type="text" 
-                id="genre" 
-                class="form-control" 
-                v-model="newDrama.genre" 
-                required
-                aria-required="true"
-              >
-            </div>
-            
-            <div class="col-md-3 mb-3">
-              <label for="annee" class="form-label">Année</label>
-              <input 
-                type="number" 
-                id="annee" 
-                class="form-control" 
-                v-model="newDrama.annee" 
-                required
-                min="1900" 
-                max="2100"
-                aria-required="true"
-              >
-            </div>
-          </div>
-          
-          <div class="mb-3">
-            <label for="acteurs" class="form-label">Acteurs</label>
-            <input 
-              type="text" 
-              id="acteurs" 
-              class="form-control" 
-              v-model="newDrama.acteurs" 
-              required
-              aria-required="true"
-              placeholder="Ex: Acteur 1, Acteur 2"
-            >
-          </div>
-          
-          <div class="mb-3">
-            <label for="synopsis" class="form-label">Synopsis</label>
-            <textarea 
-              id="synopsis" 
-              class="form-control" 
-              v-model="newDrama.synopsis" 
-              rows="4" 
-              required
-              aria-required="true"
-            ></textarea>
-          </div>
-          
-          <button 
-            type="submit" 
-            class="btn btn-primary"
-            :disabled="addLoading"
-          >
-            <span v-if="addLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Ajouter
-          </button>
-        </form>
+        <!-- Utiliser le composant DramaForm -->
+        <drama-form 
+          :loading="addLoading"
+          submit-button-text="Ajouter"
+          @submit="addDrama"
+        />
       </div>
     </div>
     
@@ -181,18 +112,15 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import DramaForm from '@/components/DramaForm.vue';
 
 export default {
   name: 'AdminDashboard',
+  components: {
+    DramaForm
+  },
   data() {
     return {
-      newDrama: {
-        titre: '',
-        genre: '',
-        annee: new Date().getFullYear(),
-        acteurs: '',
-        synopsis: ''
-      },
       dramaToDelete: null,
       deleteModal: null,
       addLoading: false,
@@ -212,20 +140,10 @@ export default {
       deleteDramaAction: 'drama/deleteDrama'
     }),
     
-    async addDrama() {
+    async addDrama(dramaData) {
       try {
         this.addLoading = true;
-        await this.addDramaAction(this.newDrama);
-        
-        // Réinitialiser le formulaire
-        this.newDrama = {
-          titre: '',
-          genre: '',
-          annee: new Date().getFullYear(),
-          acteurs: '',
-          synopsis: ''
-        };
-        
+        await this.addDramaAction(dramaData);
         this.$root.$emit('show-message', 'Drama ajouté avec succès.', 'success');
       } catch (error) {
         console.error('Erreur lors de l\'ajout du drama:', error);

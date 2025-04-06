@@ -1,107 +1,107 @@
 <template>
-    <div class="drama-details">
-      <!-- Loading indicator -->
-      <div v-if="isLoading" class="my-5 text-center">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Chargement...</span>
-        </div>
-        <p>Chargement des détails...</p>
+  <div class="drama-details">
+    <!-- Loading indicator -->
+    <div v-if="isLoading" class="my-5 text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Chargement...</span>
       </div>
-      
-      <div v-else-if="drama">
-        <div class="row">
-          <div class="col-md-4 mb-4">
-            <!-- Image avec texte alternatif pour accessibilité -->
-            <img 
-  :src="`/img/${formatImageName(drama.Titre)}.jpg`" 
-  class="img-fluid" 
-              :alt="'Affiche du drama ' + drama.Titre"
-            >
+      <p>Chargement des détails...</p>
+    </div>
+    
+    <div v-else-if="drama">
+      <div class="row">
+        <div class="col-md-4 mb-4">
+          <!-- Image avec texte alternatif pour accessibilité -->
+          <img 
+            :src="`/img/${formatImageName(drama.Titre)}.jpg`" 
+            class="img-fluid" 
+            :alt="'Affiche du drama ' + drama.Titre"
+            @error="handleImageError($event, drama.Titre)"
+          >
+        </div>
+        
+        <div class="col-md-8">
+          <h1 class="mb-3">{{ drama.Titre }}</h1>
+          
+          <div class="d-flex align-items-center mb-3">
+            <span class="badge bg-primary me-2">{{ drama.Genre }}</span>
+            <span class="me-3">{{ drama.Annee }}</span>
+            <div v-if="averageRating > 0" class="text-warning">
+              {{ typeof averageRating === 'number' ? averageRating.toFixed(1) : '0.0' }} {{ averageRating | stars }}
+            </div>
           </div>
           
-          <div class="col-md-8">
-            <h1 class="mb-3">{{ drama.Titre }}</h1>
+          <!-- Action buttons -->
+          <div class="mb-4">
+            <button 
+              v-if="isLoggedIn && !isAdmin" 
+              class="btn me-2" 
+              :class="isFavorite ? 'btn-danger' : 'btn-outline-warning'"
+              @click="toggleFavorite"
+              :disabled="favoriteLoading"
+              :aria-label="isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+            >
+              <i class="bi" :class="isFavorite ? 'bi-heart-fill' : 'bi-heart'"></i>
+              {{ isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris' }}
+            </button>
             
-            <div class="d-flex align-items-center mb-3">
-              <span class="badge bg-primary me-2">{{ drama.Genre }}</span>
-              <span class="me-3">{{ drama.Annee }}</span>
-              <div v-if="averageRating > 0" class="text-warning">
-                {{ typeof averageRating === 'number' ? averageRating.toFixed(1) : '0.0' }} {{ averageRating | stars }}
+            <button 
+              v-if="isAdmin" 
+              class="btn btn-danger me-2" 
+              @click="confirmDelete"
+              aria-label="Supprimer ce drama"
+            >
+              <i class="bi bi-trash"></i> Supprimer
+            </button>
+            
+            <button 
+              v-if="isAdmin" 
+              class="btn btn-primary" 
+              @click="editDrama"
+              aria-label="Modifier ce drama"
+            >
+              <i class="bi bi-pencil"></i> Modifier
+            </button>
+          </div>
+          
+          <h2>Synopsis</h2>
+          <p>{{ drama.Synopsis }}</p>
+          
+          <h2>Acteurs</h2>
+          <p>{{ drama.Acteurs }}</p>
+          
+          <!-- Rating section for logged in users -->
+          <div v-if="isLoggedIn && !isAdmin" class="mt-4">
+            <h2>Votre note</h2>
+            <div class="mb-3">
+              <div class="rating">
+                <span 
+                  v-for="n in 5" 
+                  :key="n" 
+                  :class="['star', { 'active': n <= userRating }]"
+                  @click="rateDrama(n)"
+                  tabindex="0"
+                  :aria-label="`Noter ${n} étoile${n > 1 ? 's' : ''}`"
+                  @keydown.enter="rateDrama(n)"
+                >
+                  ★
+                </span>
               </div>
             </div>
-            
-            <!-- Action buttons -->
-            <div class="mb-4">
-              <button 
-                v-if="isLoggedIn && !isAdmin" 
-                class="btn me-2" 
-                :class="isFavorite ? 'btn-danger' : 'btn-outline-warning'"
-                @click="toggleFavorite"
-                :disabled="favoriteLoading"
-                :aria-label="isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'"
-              >
-                <i class="bi" :class="isFavorite ? 'bi-heart-fill' : 'bi-heart'"></i>
-                {{ isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris' }}
-              </button>
-              
-              <button 
-                v-if="isAdmin" 
-                class="btn btn-danger me-2" 
-                @click="confirmDelete"
-                aria-label="Supprimer ce drama"
-              >
-                <i class="bi bi-trash"></i> Supprimer
-              </button>
-              
-              <button 
-                v-if="isAdmin" 
-                class="btn btn-primary" 
-                @click="editDrama"
-                aria-label="Modifier ce drama"
-              >
-                <i class="bi bi-pencil"></i> Modifier
-              </button>
+          </div>
+          
+          <!-- All ratings section -->
+          <div class="mt-4">
+            <h2>Avis des utilisateurs</h2>
+            <div v-if="ratings.length === 0" class="alert alert-info">
+              Aucun avis pour le moment.
             </div>
-            
-            <h2>Synopsis</h2>
-            <p>{{ drama.Synopsis }}</p>
-            
-            <h2>Acteurs</h2>
-            <p>{{ drama.Acteurs }}</p>
-            
-            <!-- Rating section for logged in users -->
-            <div v-if="isLoggedIn && !isAdmin" class="mt-4">
-              <h2>Votre note</h2>
-              <div class="mb-3">
-                <div class="rating">
-                  <span 
-                    v-for="n in 5" 
-                    :key="n" 
-                    :class="['star', { 'active': n <= userRating }]"
-                    @click="rateDrama(n)"
-                    tabindex="0"
-                    :aria-label="`Noter ${n} étoile${n > 1 ? 's' : ''}`"
-                    @keydown.enter="rateDrama(n)"
-                  >
-                    ★
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <!-- All ratings section -->
-            <div class="mt-4">
-              <h2>Avis des utilisateurs</h2>
-              <div v-if="ratings.length === 0" class="alert alert-info">
-                Aucun avis pour le moment. Soyez le premier à noter ce drama !
-              </div>
-              <div v-else class="list-group">
-                <div v-for="rating in ratings" :key="rating.ID_Avis" class="list-group-item">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                      <strong>{{ rating.Nom }}</strong>
-                      <div class="text-warning">{{ rating.Note | stars }}</div>
-                    </div>
+            <div v-else class="list-group">
+              <div v-for="rating in ratings" :key="rating.ID_Avis" class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>{{ rating.Nom }}</strong>
+                    <div class="text-warning">{{ rating.Note | stars }}</div>
                   </div>
                 </div>
               </div>
@@ -109,73 +109,75 @@
           </div>
         </div>
       </div>
-      
-      <div v-else class="alert alert-warning">
-        Drama non trouvé.
-        <router-link to="/" class="alert-link">Retour à l'accueil</router-link>
-      </div>
-      
-      <!-- Edit Drama Modal (Admin Only) -->
-      <div v-if="isAdmin && drama" class="modal fade" id="editDramaModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Modifier le drama</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-            </div>
-            <div class="modal-body">
-              <form @submit.prevent="updateDrama">
-                <div class="mb-3">
-                  <label for="titre" class="form-label">Titre</label>
-                  <input type="text" class="form-control" id="titre" v-model="editForm.titre" required>
-                </div>
-                <div class="mb-3">
-                  <label for="genre" class="form-label">Genre</label>
-                  <input type="text" class="form-control" id="genre" v-model="editForm.genre" required>
-                </div>
-                <div class="mb-3">
-                  <label for="annee" class="form-label">Année</label>
-                  <input type="number" class="form-control" id="annee" v-model="editForm.annee" required min="1900" max="2100">
-                </div>
-                <div class="mb-3">
-                  <label for="acteurs" class="form-label">Acteurs</label>
-                  <input type="text" class="form-control" id="acteurs" v-model="editForm.acteurs" required>
-                </div>
-                <div class="mb-3">
-                  <label for="synopsis" class="form-label">Synopsis</label>
-                  <textarea class="form-control" id="synopsis" v-model="editForm.synopsis" rows="4" required></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Enregistrer</button>
-              </form>
-            </div>
+    </div>
+    
+    <div v-else class="alert alert-warning">
+      Drama non trouvé.
+      <router-link to="/" class="alert-link">Retour à l'accueil</router-link>
+    </div>
+    
+    <!-- Edit Drama Modal (Admin Only) -->
+    <div v-if="isAdmin && drama" class="modal fade" id="editDramaModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Modifier le drama</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
           </div>
-        </div>
-      </div>
-      
-      <!-- Delete Confirmation Modal -->
-      <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">Confirmation de suppression</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-            </div>
-            <div class="modal-body">
-              <p>Êtes-vous sûr de vouloir supprimer ce drama ? Cette action est irréversible.</p>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-              <button type="button" class="btn btn-danger" @click="deleteDrama">Confirmer la suppression</button>
-            </div>
+          <div class="modal-body">
+            <form @submit.prevent="updateDrama">
+              <div class="mb-3">
+                <label for="titre" class="form-label">Titre</label>
+                <input type="text" class="form-control" id="titre" v-model="editForm.titre" required>
+              </div>
+              <div class="mb-3">
+                <label for="genre" class="form-label">Genre</label>
+                <input type="text" class="form-control" id="genre" v-model="editForm.genre" required>
+              </div>
+              <div class="mb-3">
+                <label for="annee" class="form-label">Année</label>
+                <input type="number" class="form-control" id="annee" v-model="editForm.annee" required min="1900" max="2100">
+              </div>
+              <div class="mb-3">
+                <label for="acteurs" class="form-label">Acteurs</label>
+                <input type="text" class="form-control" id="acteurs" v-model="editForm.acteurs" required>
+              </div>
+              <div class="mb-3">
+                <label for="synopsis" class="form-label">Synopsis</label>
+                <textarea class="form-control" id="synopsis" v-model="editForm.synopsis" rows="4" required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">Enregistrer</button>
+            </form>
           </div>
         </div>
       </div>
     </div>
-  </template>
-  
-  <script>
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Confirmation de suppression</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+          </div>
+          <div class="modal-body">
+            <p>Êtes-vous sûr de vouloir supprimer ce drama ? Cette action est irréversible.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            <button type="button" class="btn btn-danger" @click="deleteDrama">Confirmer la suppression</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
 import { mapGetters, mapActions } from 'vuex';
 import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import { formatImageName, handleImageError } from '@/utils/image';
 
 export default {
   name: 'DramaDetails',
@@ -207,12 +209,9 @@ export default {
       drama: 'drama/currentDrama',
       isLoading: 'drama/isLoading',
       isLoggedIn: 'user/isLoggedIn',
-      user: 'user/user'
+      user: 'user/user',
+      isAdmin: 'user/isAdmin'
     }),
-    
-    isAdmin() {
-      return this.isLoggedIn && this.user.id === 1;
-    },
     
     ratings() {
       return this.$store.getters['rating/getRatingsForDrama'](this.id);
@@ -223,15 +222,9 @@ export default {
     }
   },
   methods: {
-    // Méthode pour formater le nom de l'image
-    formatImageName(title) {
-  return title.toLowerCase()
-    .replace(/[^a-z0-9\- ]/g, '')  // Permet de conserver les tirets
-    .replace(/ /g, '-')            // Remplacer les espaces par des traits d'union
-    .replace(/:/g, '')             // Supprimer les deux-points
-    .replace(/-{2,}/g, '-')        // Remplacer les tirets multiples par un seul
-},
-
+    formatImageName,
+    handleImageError,
+    
     ...mapActions({
       fetchDrama: 'drama/fetchDrama',
       updateDramaAction: 'drama/updateDrama',
@@ -400,36 +393,35 @@ export default {
   }
 };
 </script>
-  
-  <style scoped>
-  .rating {
-    display: flex;
-    font-size: 2rem;
-    cursor: pointer;
-  }
-  
-  .star {
-    color: #ccc;
-    transition: color 0.2s;
-    padding: 0 5px;
-  }
-  
-  .star:hover,
-  .star.active {
-    color: #ffc107;
-  }
-  
-  .star:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.5);
-    border-radius: 4px;
-  }
-  </style>
-  <style scoped>
-  .img-fluid {
+
+<style scoped>
+.rating {
+  display: flex;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.star {
+  color: #ccc;
+  transition: color 0.2s;
+  padding: 0 5px;
+}
+
+.star:hover,
+.star.active {
+  color: #ffc107;
+}
+
+.star:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.5);
+  border-radius: 4px;
+}
+
+.img-fluid {
   width: 100%;
   height: auto;  /* Hauteur automatique */
   max-height: 600px;  /* Optionnel : limite maximale */
   object-fit: scale-down;  /* Centrer l'image */
-  }
-  </style>
+}
+</style>

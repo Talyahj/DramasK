@@ -69,14 +69,21 @@ const routes = [
 const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
-  routes
+  routes,
+  // Scroll to top on navigation
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { x: 0, y: 0 };
+    }
+  }
 });
 
 // Navigation guards
 router.beforeEach((to, from, next) => {
   const isLoggedIn = store.getters['user/isLoggedIn'];
-  const user = store.getters['user/user'];
-  const isAdmin = isLoggedIn && user.id === 1;
+  const isAdmin = store.getters['user/isAdmin'];
   
   // Routes nécessitant une authentification
   if (to.matched.some(record => record.meta.requiresAuth)) {
@@ -91,6 +98,12 @@ router.beforeEach((to, from, next) => {
         if (isAdmin) {
           next();
         } else {
+          // Rediriger vers la page d'accueil avec un message d'erreur
+          Vue.prototype.$root.$emit(
+            'show-message', 
+            'Accès refusé - Droits administrateur requis', 
+            'danger'
+          );
           next({ name: 'Home' });
         }
       } else {

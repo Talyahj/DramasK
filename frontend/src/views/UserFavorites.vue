@@ -25,6 +25,7 @@
             :src="`/img/${formatImageName(favorite.Titre)}.jpg`" 
             class="card-img-top" 
             :alt="'Image du drama ' + favorite.Titre"
+            @error="handleImageError($event, favorite.Titre)"
           >
           
           <div class="card-body">
@@ -61,6 +62,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex';
+import { formatImageName, handleImageError } from '@/utils/image';
 
 export default {
   name: 'UserFavorites',
@@ -71,6 +73,9 @@ export default {
     })
   },
   methods: {
+    formatImageName,
+    handleImageError,
+    
     ...mapActions({
       fetchFavorites: 'favorite/fetchFavorites'
     }),
@@ -83,22 +88,6 @@ export default {
         console.error('Erreur lors de la suppression du favori:', error);
         this.$root.$emit('show-message', 'Erreur lors de la suppression du favori.', 'danger');
       }
-    },
-    
-    // Ajoutez cette fonction pour formater le nom de l'image
-    formatImageName(title) {
-      return title.toLowerCase()
-        .replace(/[^a-z0-9\- ]/g, '')  // Permet de conserver les tirets
-        .replace(/ /g, '-')            // Remplacer les espaces par des traits d'union
-        .replace(/:/g, '')             // Supprimer les deux-points
-        .replace(/-{2,}/g, '-');       // Remplacer les tirets multiples par un seul
-    },
-    
-    // Ajoutez cette fonction pour gérer les erreurs de chargement d'image
-    handleImageError(event, title) {
-      // Si l'image ne peut pas être chargée, remplacer par une image par défaut
-      event.target.src = "https://via.placeholder.com/350x200?text=Drama+Image";
-      console.log(`Image pour ${title} non trouvée, utilisation de l'image par défaut`);
     }
   },
   async mounted() {
