@@ -11,7 +11,6 @@ DramasK est une application web complète permettant aux utilisateurs de découv
 - Filtrer les dramas par genre
 - Rechercher des dramas par titre, acteur ou synopsis
 - Consulter les détails d'un drama (synopsis, acteurs, année, notes)
-- Voir les avis des utilisateurs
 
 ### Utilisateurs connectés
 - Tout ce que peuvent faire les utilisateurs non connectés
