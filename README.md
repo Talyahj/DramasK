@@ -1,6 +1,6 @@
 # DramasK - Application web de gestion de dramas coréens
 
-## 📝 Description
+## Description
 
 DramasK est une application web complète permettant aux utilisateurs de découvrir, consulter et gérer leurs dramas coréens préférés. L'application offre une interface intuitive pour parcourir les dramas, les ajouter à ses favoris, les noter, et pour les administrateurs, gérer le contenu du site.
 
