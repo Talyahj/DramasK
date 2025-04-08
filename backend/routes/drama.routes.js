@@ -6,6 +6,7 @@ const { authenticateToken, isAdmin } = require('../utils/auth');
 // Routes publiques
 router.get('/dramas', dramaController.getAllDramas);
 router.get('/dramas/:id', dramaController.getDramaById);
+router.get('/genres', dramaController.getAllGenres);
 
 // Routes protégées (admin seulement)
 router.post('/dramas', authenticateToken, isAdmin, dramaController.createDrama);

@@ -141,17 +141,21 @@ export default {
     }),
     
     async addDrama(dramaData) {
-      try {
-        this.addLoading = true;
-        await this.addDramaAction(dramaData);
-        this.$root.$emit('show-message', 'Drama ajouté avec succès.', 'success');
-      } catch (error) {
-        console.error('Erreur lors de l\'ajout du drama:', error);
-        this.$root.$emit('show-message', 'Erreur lors de l\'ajout du drama.', 'danger');
-      } finally {
-        this.addLoading = false;
-      }
-    },
+  try {
+    this.addLoading = true;
+    await this.addDramaAction(dramaData);
+    
+    // Émettre un événement pour signaler qu'un drama a été ajouté
+    this.$root.$emit('drama-added', dramaData);
+    
+    this.$root.$emit('show-message', 'Drama ajouté avec succès.', 'success');
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout du drama:', error);
+    this.$root.$emit('show-message', 'Erreur lors de l\'ajout du drama.', 'danger');
+  } finally {
+    this.addLoading = false;
+  }
+},
     
     confirmDelete(drama) {
       this.dramaToDelete = drama;

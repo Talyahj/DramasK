@@ -32,6 +32,18 @@ const dramaController = {
       res.status(500).json({ message: 'Erreur serveur' });
     }
   },
+
+  // Récupérer tous les genres disponibles
+getAllGenres: async (req, res) => {
+  try {
+    const [genres] = await pool.query('SELECT DISTINCT Genre FROM Drama ORDER BY Genre ASC');
+    const genreList = genres.map(g => g.Genre);
+    res.json(genreList);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des genres:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+},
   
   // Créer un nouveau drama (admin seulement)
   createDrama: async (req, res) => {

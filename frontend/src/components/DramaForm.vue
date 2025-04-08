@@ -122,11 +122,18 @@
       };
     },
     computed: {
-      availableGenres() {
-        const allDramas = this.$store.getters['drama/allDramas'];
-        return [...new Set(allDramas.map(drama => drama.Genre))].sort();
-      }
-    },
+  availableGenres() {
+    // Essayer d'abord d'obtenir les genres depuis le store
+    const storeGenres = this.$store.getters['drama/allGenres'];
+    if (storeGenres && storeGenres.length > 0) {
+      return storeGenres;
+    }
+    
+    // Sinon, extraire les genres des dramas
+    const allDramas = this.$store.getters['drama/allDramas'];
+    return [...new Set(allDramas.map(drama => drama.Genre))].sort();
+  }
+},
     watch: {
       initialData(newVal) {
         this.formData = { ...newVal };

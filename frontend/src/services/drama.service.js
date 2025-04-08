@@ -24,5 +24,10 @@ export default {
   // Supprimer un drama (admin seulement)
   deleteDrama(id) {
     return api.delete(`/dramas/${id}`);
-  }
+  },
+
+  // Récupérer tous les genres disponibles
+getAllGenres() {
+  return api.get('/genres');
+}
 };

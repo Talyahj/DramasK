@@ -3,13 +3,15 @@ import dramaService from '@/services/drama.service';
 const state = {
   dramas: [],
   currentDrama: null,
-  loading: false
+  loading: false,
+  genres: [] 
 };
 
 const getters = {
   allDramas: state => state.dramas,
   currentDrama: state => state.currentDrama,
-  isLoading: state => state.loading
+  isLoading: state => state.loading,
+  allGenres: state => state.genres
 };
 
 const actions = {
@@ -72,12 +74,26 @@ const actions = {
     } catch (error) {
       throw error;
     }
+  },
+
+  // Récupérer tous les genres
+  async fetchGenres({ commit }) {
+    try {
+      const response = await dramaService.getAllGenres();
+      commit('SET_GENRES', response.data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 };
 
 const mutations = {
   SET_LOADING(state, status) {
     state.loading = status;
+  },
+  SET_GENRES(state, genres) {
+    state.genres = genres;
   },
   SET_DRAMAS(state, dramas) {
     state.dramas = dramas;
@@ -87,6 +103,13 @@ const mutations = {
   },
   ADD_DRAMA(state, drama) {
     state.dramas.push(drama);
+    
+    // Vérifier si le genre existe déjà dans la liste des genres
+    if (!state.genres.includes(drama.Genre)) {
+      state.genres.push(drama.Genre);
+      // Trier les genres par ordre alphabétique
+      state.genres.sort();
+    }
   },
   UPDATE_DRAMA(state, { id, dramaData }) {
     const index = state.dramas.findIndex(drama => drama.ID_Drama === parseInt(id));

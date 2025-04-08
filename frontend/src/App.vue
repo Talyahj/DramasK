@@ -180,6 +180,25 @@ export default {
     // Récupérer les filtres depuis l'URL
     this.syncFiltersFromRoute();
     
+    // Écouter l'événement d'ajout de drama
+  this.$root.$on('drama-added', (dramaData) => {
+    // Vérifier si le genre existe déjà dans la liste des genres
+    if (this.genres.indexOf(dramaData.genre) === -1) {
+      // Ajouter le nouveau genre à la liste locale des genres
+      this.genres.push(dramaData.genre);
+      // Trier les genres par ordre alphabétique
+      this.genres.sort();
+      
+      // Vérifier si les flèches de défilement sont nécessaires
+      this.$nextTick(() => {
+        this.checkScrollPosition();
+      });
+      
+      // Message de confirmation pour le nouveau genre
+      this.$root.$emit('show-message', `Le nouveau genre "${dramaData.genre}" a été ajouté à la barre de filtres.`, 'info');
+    }
+  });
+
     // Écouter les événements de message
     this.$root.$on('show-message', (message, type = 'info') => {
       this.message = message;
@@ -335,19 +354,24 @@ export default {
       }
     },
     
-    // Extraire les genres uniques des dramas
-    extractGenresFromDramas(dramas) {
-      if (dramas && dramas.length > 0) {
-        // Extraire les genres uniques et les trier
-        const uniqueGenres = [...new Set(dramas.map(drama => drama.Genre))];
-        this.genres = uniqueGenres.sort();
-        
-        // Vérifier si les flèches de défilement sont nécessaires
-        this.$nextTick(() => {
-          this.checkScrollPosition();
-        });
-      }
-    },
+   // Extraire les genres uniques des dramas
+extractGenresFromDramas(dramas) {
+  if (dramas && dramas.length > 0) {
+    // Extraire les genres uniques et les trier
+    const uniqueGenres = [...new Set(dramas.map(drama => drama.Genre))];
+    this.genres = uniqueGenres.sort();
+    
+    // Mettre à jour le store si nécessaire
+    if (this.$store.getters['drama/allGenres'].length === 0) {
+      this.$store.commit('drama/SET_GENRES', this.genres);
+    }
+    
+    // Vérifier si les flèches de défilement sont nécessaires
+    this.$nextTick(() => {
+      this.checkScrollPosition();
+    });
+  }
+},
     
     // Gestion du défilement horizontal des genres
     scrollCategories(direction) {
@@ -453,7 +477,7 @@ main {
 
 /* Barre de recherche */
 .search-container {
-  max-width: 250px;
+  width: 250px;
 }
 
 .search-input {
